@@ -410,8 +410,7 @@ void ring_buffer_yield() { }
 bool ring_buffer_wait_write(
     const struct ring_buffer* r,
     const struct ring_buffer_view* v,
-    uint32_t bytes,
-    uint64_t timeout_us) {
+    uint32_t bytes) {
 
     bool can_write =
         v ? ring_buffer_view_can_write(r, v, bytes) :
@@ -430,8 +429,7 @@ bool ring_buffer_wait_write(
 bool ring_buffer_wait_read(
     const struct ring_buffer* r,
     const struct ring_buffer_view* v,
-    uint32_t bytes,
-    uint64_t timeout_us) {
+    uint32_t bytes) {
 
     bool can_read =
         v ? ring_buffer_view_can_read(r, v, bytes) :
@@ -449,7 +447,6 @@ bool ring_buffer_wait_read(
 }
 
 static uint32_t get_step_size(
-    struct ring_buffer* r,
     struct ring_buffer_view* v,
     uint32_t bytes) {
 
@@ -483,7 +480,7 @@ uint32_t ring_buffer_write_fully_with_abort(
     uint32_t abort_value,
     const volatile uint32_t* abort_ptr) {
 
-    uint32_t candidate_step = get_step_size(r, v, bytes);
+    uint32_t candidate_step = get_step_size(v, bytes);
     uint32_t processed = 0;
 
     uint8_t* dst = (uint8_t*)data;
@@ -494,7 +491,7 @@ uint32_t ring_buffer_write_fully_with_abort(
         }
 
         long processed_here = 0;
-        ring_buffer_wait_write(r, v, candidate_step, (uint64_t)(-1));
+        ring_buffer_wait_write(r, v, candidate_step);
 
         if (v) {
             processed_here = ring_buffer_view_write(r, v, dst + processed, candidate_step, 1);
@@ -520,7 +517,7 @@ uint32_t ring_buffer_read_fully_with_abort(
     uint32_t abort_value,
     const volatile uint32_t* abort_ptr) {
 
-    uint32_t candidate_step = get_step_size(r, v, bytes);
+    uint32_t candidate_step = get_step_size(v, bytes);
     uint32_t processed = 0;
 
     uint8_t* dst = (uint8_t*)data;
@@ -532,7 +529,7 @@ uint32_t ring_buffer_read_fully_with_abort(
         }
 
         long processed_here = 0;
-        ring_buffer_wait_read(r, v, candidate_step, (uint64_t)(-1));
+        ring_buffer_wait_read(r, v, candidate_step);
 
         if (v) {
             processed_here = ring_buffer_view_read(r, v, dst + processed, candidate_step, 1);
